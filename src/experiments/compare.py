@@ -72,6 +72,16 @@ def compare(T, runs, buffers, warmup=0.0, model_list=None):
     return rows
 
 
+def plot_name(model):
+    return model.replace("база", "базовий варіант").replace("буфер", "накопичувач")
+
+
+def read_csv(path):
+    with path.open(encoding="utf-8") as f:
+        return [{k: (v if k == "model" else float(v) if v else float("nan")) for k, v in r.items()}
+                for r in csv.DictReader(f)]
+
+
 def plot_compare(rows, path):
     Ts = sorted({r["T"] for r in rows})
     names = list(dict.fromkeys(r["model"] for r in rows))
@@ -86,8 +96,9 @@ def plot_compare(rows, path):
             vals = [next(r for r in rows if r["T"] == T and r["model"] == n) for T in Ts]
             x = np.arange(len(Ts)) + (i - (len(names) - 1) / 2) * width
             ax.bar(x, [v[key] for v in vals], width, yerr=[v[key + "_ci"] for v in vals],
-                   capsize=3, color=RUN_COLORS[i], label=n)
-        ax.set_xticks(np.arange(len(Ts)), [f"T_mod = {T:g} хв" for T in Ts])
+                   capsize=3, color=RUN_COLORS[i], label=plot_name(n))
+        ax.set_xticks(np.arange(len(Ts)),
+                      [rf"$T_{{\mathrm{{мод}}}}$ = {T:g} хв" for T in Ts])
         ax.set_ylabel(label)
         decimal_comma(ax, "y")
     axes[0, 0].legend(fontsize=9)
@@ -124,7 +135,13 @@ def main():
     ap.add_argument("--runs", type=int, default=1600)
     ap.add_argument("--buffers", type=int, nargs="+", default=[20, 60, 25, 80],
                     help="pairs L1 L2")
+    ap.add_argument("--plot-only", action="store_true",
+                    help="redraw the chart from results/compare_terminating.csv")
     a = ap.parse_args()
+    if a.plot_only:
+        plot_compare(read_csv(RESULTS / "compare_terminating.csv"),
+                     RESULTS / "compare_terminating.png")
+        return
     buffers = [tuple(a.buffers[i:i + 2]) for i in range(0, len(a.buffers), 2)]
     RESULTS.mkdir(exist_ok=True)
 
