@@ -1,6 +1,6 @@
 // UML class diagram of the simulation program (src/petri, src/model)
 digraph uml {
-    graph [rankdir=TB, fontname="Times-Roman", nodesep=0.45, ranksep=0.55, pad=0.05,
+    graph [rankdir=TB, fontname="Times-Roman", nodesep=0.25, ranksep=0.55, pad=0.05,
            splines=ortho];
     node  [shape=plaintext, fontname="Times-Roman", fontsize=10];
     edge  [fontname="Times-Roman", fontsize=9, arrowsize=0.8, penwidth=0.9];
@@ -8,22 +8,22 @@ digraph uml {
     Simulator [label=<
 <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
 <TR><TD BGCOLOR="#EEEEEE"><B>Simulator</B></TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">net: PetriNet<BR/>rng: Generator<BR/>protocol: EventProtocol<BR/>t: float<BR/>warmup: float<BR/>fired_in, fired_out, window_out: Counter</TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">run(t_end, warmup, sample_every, on_sample)<BR/>place_stats(name): dict<BR/>-_out_phase()<BR/>-_in_phase(): int<BR/>-_choose(enabled): Transition<BR/>-_settle()<BR/>-_collect(t_from, t_to)</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">net: PetriNet<BR/>t: float<BR/>warmup: float</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">run(t_end, warmup)<BR/>place_stats(name): dict</TD></TR>
 </TABLE>>];
 
     PetriNet [label=<
 <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
 <TR><TD BGCOLOR="#EEEEEE"><B>PetriNet</B></TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">name: str<BR/>places: dict<BR/>transitions: dict<BR/>params: dict</TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">add_place(name, markers): Place<BR/>add_transition(name, delay, inputs,<BR/>    outputs, priority, probability)<BR/>marking(): dict<BR/>enabled(): list<BR/>next_event_time(): float<BR/>reset()</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">places: dict<BR/>transitions: dict</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">add_place(...): Place<BR/>add_transition(...)<BR/>enabled(): list<BR/>next_event_time(): float</TD></TR>
 </TABLE>>];
 
     Transition [label=<
 <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
 <TR><TD BGCOLOR="#EEEEEE"><B>Transition</B></TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">name: str<BR/>delay: Delay<BR/>priority: int<BR/>probability: float<BR/>inputs, outputs: list[Arc]<BR/>exits: list[float]</TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">is_enabled(): bool<BR/>fire_in(t, rng): float<BR/>fire_out(t): int<BR/>next_exit: float<BR/>busy: int<BR/>reset()</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">priority: int<BR/>probability: float<BR/>exits: list[float]</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">is_enabled(): bool<BR/>fire_in(t, rng): float<BR/>fire_out(t): int</TD></TR>
 </TABLE>>];
 
     Arc [label=<
@@ -35,22 +35,21 @@ digraph uml {
     Place [label=<
 <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
 <TR><TD BGCOLOR="#EEEEEE"><B>Place</B></TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">name: str<BR/>initial: int<BR/>markers: int<BR/>stat: TimeWeightedStat</TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">reset()</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">name: str<BR/>markers: int</TD></TR>
 </TABLE>>];
 
     TimeWeightedStat [label=<
 <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
 <TR><TD BGCOLOR="#EEEEEE"><B>TimeWeightedStat</B></TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">total_time, area, area_sq: float<BR/>min, max: int</TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">add(value, dt)<BR/>mean: float<BR/>std: float</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">area, area_sq: float<BR/>max: int</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">add(value, dt)<BR/>mean, std: float</TD></TR>
 </TABLE>>];
 
     EventProtocol [label=<
 <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
 <TR><TD BGCOLOR="#EEEEEE"><B>EventProtocol</B></TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">places: list<BR/>limit: int<BR/>rows: list</TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">record(t, phase, transition, net)<BR/>to_text(): str</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">rows: list</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">record(t, phase, ...)<BR/>to_text(): str</TD></TR>
 </TABLE>>];
 
     Delay [label=<
@@ -79,7 +78,7 @@ digraph uml {
     conveyor [label=<
 <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
 <TR><TD BGCOLOR="#EEEEEE">«модуль»<BR/><B>conveyor</B></TD></TR>
-<TR><TD ALIGN="LEFT" BALIGN="LEFT">build_conveyor_net(k, period, batch1, interval1,<BR/>    batch2, interval2, q1_0, q2_0, buffer): PetriNet<BR/>summarize(sim: Simulator): dict</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">build_conveyor_net(k, period, ...): PetriNet<BR/>summarize(sim): dict</TD></TR>
 </TABLE>>];
 
     // associations / compositions (edges point down the ranks; dir=back keeps UML ends)
