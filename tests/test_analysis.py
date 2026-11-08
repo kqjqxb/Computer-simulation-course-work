@@ -41,3 +41,14 @@ def test_difference_intervals():
     assert d == pytest.approx(1.0) and h == pytest.approx(0.0)
     d, h = diff_ci(a, a + 1.0)
     assert d == pytest.approx(1.0) and h > 0
+
+
+def test_estimate_mean_ci_and_range():
+    from src.experiments.estimates import estimate
+    x = [1.0, 2.0, 3.0, 4.0]
+    e = estimate(x)
+    half = stats.t.ppf(0.975, 3) * np.std(x, ddof=1) / 2
+    assert e["mean"] == pytest.approx(2.5) and e["std"] == pytest.approx(np.std(x, ddof=1))
+    assert e["ci"] == pytest.approx(half)
+    assert e["ci_low"] == pytest.approx(2.5 - half) and e["ci_high"] == pytest.approx(2.5 + half)
+    assert (e["min"], e["max"]) == (1.0, 4.0)
