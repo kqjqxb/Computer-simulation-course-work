@@ -1,12 +1,15 @@
 """Proposal (kanban buffer) compared with the base scheme and variant 20/20.
 
-python -m src.experiments.compare [--T 480 2400] [--runs 1600] [--buffer 20 60]
+python -m src.experiments.compare [--T 480 2400] [--runs 1600] [--buffers 20 60 25 80]
 
 1) Same conditions: empty queues at t = 0, horizon T, the same seeds 1..p for
    every model (common random numbers); differences to the base model are
    paired (run s of a model minus run s of the base), CI by Student.
-2) Steady state: base model and the buffer model, T = 40000 min, warm-up 3000,
-   120 runs - the buffer keeps the queues bounded, the base model does not.
+2) Steady state: base model and the buffer models, T = 40000 min, warm-up 3000,
+   120 runs - the buffers keep the queues bounded, the base model does not.
+
+Two proposal variants: (20, 60) - minimal buffer with P_skip <= 0.02,
+(25, 80) - smaller loss of completeness (P_skip about 0.01).
 
 Cost of the buffer: block_i (share of time the supplier waits) and the lost
 production 60 * lambda_i * block_i items/h of each type (lambda_i = 1 item/min).
@@ -28,9 +31,9 @@ KEYS = ["p_skip", "q1_mean", "q2_mean", "q1_max", "q2_max", "items_per_hour",
 STEADY_T, STEADY_WARM, STEADY_RUNS = 40000, 3000, 120
 
 
-def models(buffer):
-    return [("база 10/10", dict()), ("варіант 20/20", dict(k=20, period=20.0)),
-            (f"буфер ({buffer[0]}, {buffer[1]})", dict(buffer=tuple(buffer)))]
+def models(buffers):
+    return ([("база 10/10", dict()), ("варіант 20/20", dict(k=20, period=20.0))]
+            + [(f"буфер ({b[0]}, {b[1]})", dict(buffer=tuple(b))) for b in buffers])
 
 
 def with_lost(res):
@@ -46,8 +49,8 @@ def paired_ci(a, b, beta=0.95):
     return float(d.mean()), float(h)
 
 
-def compare(T, runs, buffer, warmup=0.0, model_list=None):
-    model_list = model_list or models(buffer)
+def compare(T, runs, buffers, warmup=0.0, model_list=None):
+    model_list = model_list or models(buffers)
     data = {name: with_lost(replicate_parallel(runs, T, seed=1, warmup=warmup, **kw))
             for name, kw in model_list}
     base = model_list[0][0]
@@ -76,7 +79,7 @@ def plot_compare(rows, path):
               ("q1_mean", "Середня довжина черги\nвиробів типу 1, од."),
               ("q2_mean", "Середня довжина черги\nвиробів типу 2, од."),
               ("q2_max", "Максимальна довжина черги\nвиробів типу 2, од.")]
-    fig, axes = plt.subplots(2, 2, figsize=(9, 6.4))
+    fig, axes = plt.subplots(2, 2, figsize=(9.5, 6.6))
     width = 0.8 / len(names)
     for ax, (key, label) in zip(axes.flat, panels):
         for i, n in enumerate(names):
@@ -119,20 +122,22 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--T", type=float, nargs="+", default=[480.0, 2400.0])
     ap.add_argument("--runs", type=int, default=1600)
-    ap.add_argument("--buffer", type=int, nargs=2, default=[20, 60])
+    ap.add_argument("--buffers", type=int, nargs="+", default=[20, 60, 25, 80],
+                    help="pairs L1 L2")
     a = ap.parse_args()
+    buffers = [tuple(a.buffers[i:i + 2]) for i in range(0, len(a.buffers), 2)]
     RESULTS.mkdir(exist_ok=True)
 
     rows = []
     for T in a.T:
-        rows += compare(T, a.runs, a.buffer)
+        rows += compare(T, a.runs, buffers)
     write_csv(RESULTS / "compare_terminating.csv", rows)
     plot_compare(rows, RESULTS / "compare_terminating.png")
     print("Порожній старт, однакові seed:")
     show(rows)
 
-    ml = [models(a.buffer)[0], models(a.buffer)[2]]
-    steady = compare(STEADY_T, STEADY_RUNS, a.buffer, warmup=STEADY_WARM, model_list=ml)
+    ml = [m for m in models(buffers) if "20/20" not in m[0]]
+    steady = compare(STEADY_T, STEADY_RUNS, buffers, warmup=STEADY_WARM, model_list=ml)
     write_csv(RESULTS / "compare_steady.csv", steady)
     print(f"\nСталий режим: T = {STEADY_T} хв, прогрів {STEADY_WARM} хв, {STEADY_RUNS} прогонів")
     show(steady)
