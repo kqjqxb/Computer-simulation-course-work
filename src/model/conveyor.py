@@ -48,6 +48,7 @@ def summarize(sim):
     p_skip           = N_skip / (N_fill + N_skip)
     qi_mean, qi_std  - time-weighted mean and std of the queue, items
     qi_max           - maximum queue held for a positive time, items
+    qi_end           - queue at the end of the run, items
     sections_per_hour, items_per_hour - throughput (items of each type)
     lambda_i         - observed arrival rate of type i, items/min
     w_i              - mean waiting time of a type-i item by Little's law, min
@@ -70,6 +71,8 @@ def summarize(sim):
         "p_skip": n_skip / total if total else nan,
         "q1_mean": q1["mean"], "q1_std": q1["std"], "q1_max": q1["max"],
         "q2_mean": q2["mean"], "q2_std": q2["std"], "q2_max": q2["max"],
+        "q1_end": sim.net.places["Q1"].markers,
+        "q2_end": sim.net.places["Q2"].markers,
         "sections_per_hour": 60.0 * n_fill / span,
         "items_per_hour": 60.0 * params["k"] * n_fill / span,
         "lambda1": lam1,

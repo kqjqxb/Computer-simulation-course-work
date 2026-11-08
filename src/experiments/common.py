@@ -1,4 +1,6 @@
 import math
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 
 import numpy as np
 from scipy import stats
@@ -27,3 +29,10 @@ def mean_ci(values, beta=0.95):
         return m, math.nan
     half = stats.t.ppf((1 + beta) / 2, n - 1) * x.std(ddof=1) / math.sqrt(n)
     return m, float(half)
+
+
+def replicate_parallel(runs, T, seed=1, warmup=0.0, **model_kwargs):
+    """Same as replicate(), runs spread over processes."""
+    job = partial(run_once, T=T, warmup=warmup, **model_kwargs)
+    with ProcessPoolExecutor() as ex:
+        return list(ex.map(job, range(seed, seed + runs)))
