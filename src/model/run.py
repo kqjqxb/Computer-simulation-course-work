@@ -25,6 +25,12 @@ ROWS = [
     ("w1", "Середній час очікування виробу типу 1", "хв", 2),
     ("w2", "Середній час очікування виробу типу 2", "хв", 2),
 ]
+BUFFER_ROWS = [
+    ("block1", "Частка часу блокування постачальника типу 1", "–", 4),
+    ("block2", "Частка часу блокування постачальника типу 2", "–", 4),
+    ("lost1", "Втрачене виробництво виробів типу 1", "виробів/год", 2),
+    ("lost2", "Втрачене виробництво виробів типу 2", "виробів/год", 2),
+]
 
 
 def interval(mean, spread):
@@ -47,6 +53,8 @@ def parse_args(argv=None):
                    help="інтервал надходження типу 2: unif(D, S), хв; S=0 - детермінований")
     p.add_argument("--q1-0", type=int, default=0, help="початкова черга типу 1")
     p.add_argument("--q2-0", type=int, default=0, help="початкова черга типу 2")
+    p.add_argument("--buffer", type=int, nargs=2, default=None, metavar=("L1", "L2"),
+                   help="ємності буферів (канбан); без параметра - базова модель")
     p.add_argument("--trace", action="store_true", help="вивести протокол подій першого прогону")
     p.add_argument("--trace-limit", type=int, default=60, help="кількість рядків протоколу")
     return p.parse_args(argv)
@@ -61,32 +69,41 @@ def main(argv=None):
     model = dict(k=a.k, period=a.period,
                  batch1=a.batch1, interval1=interval(*a.int1),
                  batch2=a.batch2, interval2=interval(*a.int2),
-                 q1_0=a.q1_0, q2_0=a.q2_0)
+                 q1_0=a.q1_0, q2_0=a.q2_0,
+                 buffer=tuple(a.buffer) if a.buffer else None)
 
     protocol = None
     if a.trace:
-        protocol = EventProtocol(places=["Q1", "Q2", "Section", "Filled", "Skipped"],
+        places = ["Q1", "Q2", "Section", "Filled", "Skipped"] + (["Free1", "Free2"] if a.buffer else [])
+        protocol = EventProtocol(places=places,
                                  limit=a.trace_limit,
                                  headers=("t, хв", "фаза", "перехід"),
                                  phase_names={"IN": "вхід", "OUT": "вихід"})
     results = [run_once(a.seed + i, a.T, a.warmup, protocol if i == 0 else None, **model)
                for i in range(a.runs)]
+    rows = ROWS
+    if a.buffer:
+        for r in results:
+            r["lost1"] = 60.0 * r["block1"]  # supplier of 1 item/min idle
+            r["lost2"] = 60.0 * r["block2"]
+        rows = ROWS + BUFFER_ROWS
 
     print(f"Модель: k = {a.k} виробів/секцію, конвеєр 1 секція / {a.period:g} хв; "
           f"тип 1: {a.batch1} шт. кожні {model['interval1']!r} хв; "
-          f"тип 2: {a.batch2} шт. кожні {model['interval2']!r} хв")
+          f"тип 2: {a.batch2} шт. кожні {model['interval2']!r} хв"
+          + (f"; буфери L1 = {a.buffer[0]}, L2 = {a.buffer[1]}" if a.buffer else ""))
     print(f"Час моделювання T = {a.T:g} хв, збір статистики з {a.warmup:g} хв, "
           f"прогонів: {a.runs}, seed = {a.seed}..{a.seed + a.runs - 1}")
     print()
 
-    name_w = max(len(f"{n}, {u}") for _, n, u, _ in ROWS)
+    name_w = max(len(f"{n}, {u}") for _, n, u, _ in rows)
     if a.runs == 1:
         print(f"{'Характеристика':<{name_w}}  {'Значення':>10}")
-        for key, name, unit, d in ROWS:
+        for key, name, unit, d in rows:
             print(f"{name + ', ' + unit:<{name_w}}  {fmt(results[0][key], d):>10}")
     else:
         print(f"{'Характеристика':<{name_w}}  {'Середнє':>10}  {'±95% ДІ':>9}  {'Мін':>9}  {'Макс':>9}")
-        for key, name, unit, d in ROWS:
+        for key, name, unit, d in rows:
             vals = [r[key] for r in results]
             m, h = mean_ci(vals)
             print(f"{name + ', ' + unit:<{name_w}}  {fmt(m, d):>10}  {fmt(h, d):>9}  "

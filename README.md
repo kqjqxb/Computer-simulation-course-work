@@ -29,11 +29,25 @@ pytest                                                # tests
 python -m src.model.run --k 10 --period 10 --T 1000 --seed 1 --runs 20
 python -m src.model.run --k 20 --period 20 --T 1000 --runs 20       # 20/20 variant
 python -m src.model.run --int1 5 0 --int2 20 0 --T 60 --trace        # deterministic arrivals, event protocol
+
+# verification and analytical checks
+python -m src.experiments.verification          # results/verification.csv, event protocol
+python -m src.experiments.queue_offset          # Q1 - Q2 vs renewal theory
+
+# experimental study (results/*.csv, *.png)
+python -m src.experiments.transient             # transient period, criterion (3.1)
+python -m src.experiments.replications          # number of runs, formula (3.5)
+python -m src.experiments.anova --T 480 2400    # ANOVA: 10/10 vs 20/20, horizon is a parameter
+python -m src.experiments.buffer_series         # buffer (kanban) grid, regression of P_skip on L2
+python -m src.experiments.compare --T 480 2400  # base, 20/20 and buffer (20, 60), same seeds; steady state
 ```
+
+Buffer (kanban) modification from the CLI:
+`python -m src.model.run --buffer 20 60 --T 40000 --warmup 3000 --runs 20`.
 
 Options of `src.model.run`: `--k`, `--period`, `--T`, `--warmup`, `--seed`, `--runs`,
 `--batch1`, `--int1 D S` (arrival interval unif(D, S), S = 0 for a fixed interval),
-`--batch2`, `--int2 D S`, `--q1-0`, `--q2-0`, `--trace`, `--trace-limit`.
+`--batch2`, `--int2 D S`, `--q1-0`, `--q2-0`, `--buffer L1 L2`, `--trace`, `--trace-limit`.
 
 ## Layout
 

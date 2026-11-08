@@ -16,3 +16,11 @@ def test_cli_deterministic_intervals(capsys):
     assert "Заповнено секцій, од." in out
     line = next(l for l in out.splitlines() if l.startswith("Пропущено секцій"))
     assert line.split()[-1] == "1.0"
+
+
+def test_cli_buffer_rows(capsys):
+    main(["--T", "500", "--runs", "2", "--buffer", "20", "60", "--trace", "--trace-limit", "5"])
+    out = capsys.readouterr().out
+    assert "буфери L1 = 20, L2 = 60" in out
+    assert "Частка часу блокування постачальника типу 1, –" in out
+    assert "Free2" in out
