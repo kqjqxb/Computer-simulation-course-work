@@ -129,7 +129,7 @@ def plot_series(rows, level, best, reg_row, path_p, path_q):
         pts = sorted((r for r in rows if r["L1"] == l1), key=lambda r: r["L2"])
         ax.errorbar([r["L2"] for r in pts], [r["p_skip"] for r in pts],
                     yerr=[r["p_skip_ci"] for r in pts], marker="o", ms=4, capsize=3,
-                    color=RUN_COLORS[i], lw=1, label=f"L1 = {l1}")
+                    color=RUN_COLORS[i], lw=1, label=f"$L_1$ = {l1}")
     grid = np.linspace(reg_row["L2_from"], reg_row["L2_to"], 200)
     pretty = {"ln P = b0 + b1 x + b2 x^2": r"$\ln P = b_0 + b_1 x + b_2 x^2$",
               "ln P = b0 + b1 x": r"$\ln P = b_0 + b_1 x$",
@@ -140,12 +140,12 @@ def plot_series(rows, level, best, reg_row, path_p, path_q):
     ax.axhline(level, color="gray", ls=":", lw=1.2, label=f"рівень {level:g}".replace(".", ","))
     if best:
         ax.plot(best["L2"], best["p_skip"], "s", ms=10, mfc="none", mec="k",
-                label=f"мінімальний буфер ({best['L1']}, {best['L2']})")
+                label=f"мінімальний накопичувач ({best['L1']}, {best['L2']})")
     ax.set_yscale("log")
     ticks = [0.01, 0.02, 0.05, 0.1, 0.2]
     ax.set_yticks(ticks, [f"{t:g}".replace(".", ",") for t in ticks])
     ax.yaxis.set_minor_formatter(plt.matplotlib.ticker.NullFormatter())
-    ax.set_xlabel("Ємність буфера виробів типу 2 L2, од.")
+    ax.set_xlabel("Місткість накопичувача виробів типу 2 $L_2$, од.")
     ax.set_ylabel("Ймовірність пропуску секції, –")
     ax.legend(fontsize=9)
     fig.tight_layout()
@@ -157,8 +157,8 @@ def plot_series(rows, level, best, reg_row, path_p, path_q):
         for i, l1 in enumerate(L1_GRID):
             pts = sorted((r for r in rows if r["L1"] == l1), key=lambda r: r["L2"])
             ax.plot([r["L2"] for r in pts], [r[key] for r in pts], marker="o", ms=4,
-                    color=RUN_COLORS[i], lw=1, label=f"L1 = {l1}")
-        ax.set_xlabel("Ємність буфера L2, од.")
+                    color=RUN_COLORS[i], lw=1, label=f"$L_1$ = {l1}")
+        ax.set_xlabel("Місткість накопичувача $L_2$, од.")
         ax.set_ylabel(f"Середня довжина черги\nвиробів {title}, од.")
         decimal_comma(ax)
     axes[0].legend(fontsize=9)

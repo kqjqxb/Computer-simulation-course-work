@@ -99,9 +99,10 @@ def plot_running(runs, path, x0=0.0, t_mod=None):
         if key == "p_skip":
             ax.set_ylim(bottom=0)
         if t_mod:
-            ax.axvline(t_mod, color="k", ls="--", lw=1, label=f"T_mod = {t_mod:g} хв")
+            t_txt = f"{t_mod:,.0f}".replace(",", " ")
+            ax.axvline(t_mod, color="k", ls="--", lw=1, label=rf"$T_{{\mathrm{{мод}}}}$ = {t_txt} хв")
         decimal_comma(ax)
-    axes[-1].set_xlabel("Модельний час t, хв")
+    axes[-1].set_xlabel(r"Модельний час $t$, хв")
     axes[-1].set_xlim(left=x0)
     axes[0].legend(ncol=3, fontsize=9, loc="best")
     fig.tight_layout()
@@ -141,7 +142,7 @@ def warmup_study(buffer):
     for lvl, c in ((lvl1, RUN_COLORS[0]), (lvl2, RUN_COLORS[1])):
         ax.axhspan(0.95 * lvl, 1.05 * lvl, color=c, alpha=0.12)
     ax.axvline(t_warm, color="k", ls="--", lw=1, label=f"кінець перехідного періоду, {t_warm:g} хв")
-    ax.set_xlabel("Модельний час t, хв")
+    ax.set_xlabel(r"Модельний час $t$, хв")
     ax.set_ylabel(f"Середня за {ENS_RUNS} прогонами\nдовжина черги, од.")
     ax.set_ylim(bottom=0)
     ax.legend(fontsize=9, loc="lower right")
