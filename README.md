@@ -39,7 +39,10 @@ python -m src.experiments.transient             # transient period, criterion (3
 python -m src.experiments.replications          # number of runs, formula (3.5)
 python -m src.experiments.anova --T 480 2400    # ANOVA: 10/10 vs 20/20, horizon is a parameter
 python -m src.experiments.buffer_series         # buffer (kanban) grid, regression of P_skip on L2
-python -m src.experiments.compare --T 480 2400  # base, 20/20 and buffer (20, 60), same seeds; steady state
+python -m src.experiments.compare --T 480 2400  # base, 20/20, buffers (20, 60) and (25, 80); steady state
+
+# diagrams (docs/diagrams: process, Petri nets, UML; PNG + SVG + source)
+python -m docs.diagrams.render
 ```
 
 Buffer (kanban) modification from the CLI:

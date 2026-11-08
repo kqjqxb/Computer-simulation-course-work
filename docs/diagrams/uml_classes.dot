@@ -1,0 +1,108 @@
+// UML class diagram of the simulation program (src/petri, src/model)
+digraph uml {
+    graph [rankdir=TB, fontname="Times-Roman", nodesep=0.45, ranksep=0.55, pad=0.05,
+           splines=ortho];
+    node  [shape=plaintext, fontname="Times-Roman", fontsize=10];
+    edge  [fontname="Times-Roman", fontsize=9, arrowsize=0.8, penwidth=0.9];
+
+    Simulator [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>Simulator</B></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">net: PetriNet<BR/>rng: Generator<BR/>protocol: EventProtocol<BR/>t: float<BR/>warmup: float<BR/>fired_in, fired_out, window_out: Counter</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">run(t_end, warmup, sample_every, on_sample)<BR/>place_stats(name): dict<BR/>-_out_phase()<BR/>-_in_phase(): int<BR/>-_choose(enabled): Transition<BR/>-_settle()<BR/>-_collect(t_from, t_to)</TD></TR>
+</TABLE>>];
+
+    PetriNet [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>PetriNet</B></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">name: str<BR/>places: dict<BR/>transitions: dict<BR/>params: dict</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">add_place(name, markers): Place<BR/>add_transition(name, delay, inputs,<BR/>    outputs, priority, probability)<BR/>marking(): dict<BR/>enabled(): list<BR/>next_event_time(): float<BR/>reset()</TD></TR>
+</TABLE>>];
+
+    Transition [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>Transition</B></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">name: str<BR/>delay: Delay<BR/>priority: int<BR/>probability: float<BR/>inputs, outputs: list[Arc]<BR/>exits: list[float]</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">is_enabled(): bool<BR/>fire_in(t, rng): float<BR/>fire_out(t): int<BR/>next_exit: float<BR/>busy: int<BR/>reset()</TD></TR>
+</TABLE>>];
+
+    Arc [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>Arc</B></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">place: Place<BR/>weight: int</TD></TR>
+</TABLE>>];
+
+    Place [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>Place</B></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">name: str<BR/>initial: int<BR/>markers: int<BR/>stat: TimeWeightedStat</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">reset()</TD></TR>
+</TABLE>>];
+
+    TimeWeightedStat [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>TimeWeightedStat</B></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">total_time, area, area_sq: float<BR/>min, max: int</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">add(value, dt)<BR/>mean: float<BR/>std: float</TD></TR>
+</TABLE>>];
+
+    EventProtocol [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>EventProtocol</B></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">places: list<BR/>limit: int<BR/>rows: list</TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">record(t, phase, transition, net)<BR/>to_text(): str</TD></TR>
+</TABLE>>];
+
+    Delay [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><I>Delay</I></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT"><I>sample(rng): float</I></TD></TR>
+</TABLE>>];
+
+    Const [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>Const</B></TD></TR>
+<TR><TD ALIGN="LEFT">d: float</TD></TR></TABLE>>];
+    Unif [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>Unif</B></TD></TR>
+<TR><TD ALIGN="LEFT">d, s: float</TD></TR></TABLE>>];
+    Exp [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>Exp</B></TD></TR>
+<TR><TD ALIGN="LEFT">d: float</TD></TR></TABLE>>];
+    Norm [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE"><B>Norm</B></TD></TR>
+<TR><TD ALIGN="LEFT">d, s: float</TD></TR></TABLE>>];
+
+    conveyor [label=<
+<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
+<TR><TD BGCOLOR="#EEEEEE">«модуль»<BR/><B>conveyor</B></TD></TR>
+<TR><TD ALIGN="LEFT" BALIGN="LEFT">build_conveyor_net(k, period, batch1, interval1,<BR/>    batch2, interval2, q1_0, q2_0, buffer): PetriNet<BR/>summarize(sim: Simulator): dict</TD></TR>
+</TABLE>>];
+
+    // associations / compositions (edges point down the ranks; dir=back keeps UML ends)
+    Simulator -> PetriNet [arrowhead=vee, xlabel="1"];
+    Simulator -> EventProtocol [arrowhead=vee, xlabel="0..1"];
+    PetriNet -> Place [dir=back, arrowtail=diamond, xlabel="1..*"];
+    PetriNet -> Transition [dir=back, arrowtail=diamond, xlabel="1..*"];
+    Transition -> Arc [dir=back, arrowtail=diamond, xlabel="*"];
+    Place -> Arc [dir=back, arrowtail=vee, xlabel="1"];
+    Transition -> Delay [arrowhead=vee, xlabel="1"];
+    Place -> TimeWeightedStat [dir=back, arrowtail=diamond, xlabel="1"];
+    // inheritance
+    Delay -> Const [dir=back, arrowtail=onormal];
+    Delay -> Unif [dir=back, arrowtail=onormal];
+    Delay -> Exp [dir=back, arrowtail=onormal];
+    Delay -> Norm [dir=back, arrowtail=onormal];
+    // dependency
+    conveyor -> PetriNet [style=dashed, arrowhead=vee, xlabel="«create»"];
+    conveyor -> Simulator [style=dashed, arrowhead=vee, xlabel="«use»"];
+
+    {rank=same; conveyor; Simulator}
+    {rank=same; PetriNet; EventProtocol}
+    {rank=same; Place; Transition}
+    {rank=same; TimeWeightedStat; Arc; Delay}
+    {rank=same; Const; Unif; Exp; Norm}
+}
