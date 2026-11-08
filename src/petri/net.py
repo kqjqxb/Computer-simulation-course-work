@@ -8,6 +8,7 @@ class PetriNet:
         self.name = name
         self.places = {}
         self.transitions = {}
+        self.params = {}
 
     def add_place(self, name, markers=0):
         if name in self.places:

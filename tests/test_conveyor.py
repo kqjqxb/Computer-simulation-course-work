@@ -36,7 +36,7 @@ def test_deterministic_scenario_matches_hand_calculation():
 def test_deterministic_scenario_queue_statistics():
     net = deterministic_net()
     sim = Simulator(net).run(t_end=1000, warmup=100)
-    res = summarize(sim, k=10)
+    res = summarize(sim)
     assert res["p_skip"] == 0
     # after t = 20, Q1 cycles 10 -> 15 -> 10 every 10 min (+5 at t+5)
     assert res["q1_mean"] == pytest.approx(12.5)
@@ -44,8 +44,14 @@ def test_deterministic_scenario_queue_statistics():
     # Q2 is 10 on [20, 30), 0 on [30, 40), +20 and a fill at 40, and so on
     assert res["q2_mean"] == pytest.approx(5.0)
     assert res["q2_max"] == 10
-    assert res["sections"] == 90  # sections at 110, 120, ..., 1000
-    assert res["items_per_min"] == pytest.approx(1.0)
+    assert res["n_fill"] + res["n_skip"] == 90  # sections at 110, 120, ..., 1000
+    assert res["sections_per_hour"] == pytest.approx(6.0)
+    assert res["items_per_hour"] == pytest.approx(60.0)
+    # 180 type-1 batches and 45 type-2 batches in (100, 1000] -> 1 item/min each
+    assert res["lambda1"] == pytest.approx(1.0)
+    assert res["lambda2"] == pytest.approx(1.0)
+    assert res["w1"] == pytest.approx(12.5)
+    assert res["w2"] == pytest.approx(5.0)
 
 
 @pytest.mark.parametrize("k,period", [(10, 10), (20, 20)])
