@@ -8,11 +8,11 @@ from src.petri import EventProtocol, Simulator
 def test_queue_never_exceeds_buffer(buffer):
     l1, l2 = (buffer, buffer) if isinstance(buffer, int) else buffer
     net = build_conveyor_net(buffer=buffer)
-    proto = EventProtocol(places=["Q1", "Q2", "Free1", "Free2"])
+    proto = EventProtocol(places=["Q1", "Q2", "F1", "F2"])
     Simulator(net, seed=4, protocol=proto).run(t_end=5000)
     for _, _, _, m in proto.rows:
         assert m["Q1"] <= l1 and m["Q2"] <= l2
-        assert m["Q1"] + m["Free1"] <= l1 and m["Q2"] + m["Free2"] <= l2
+        assert m["Q1"] + m["F1"] <= l1 and m["Q2"] + m["F2"] <= l2
 
 
 def test_places_are_conserved_in_buffer():
@@ -20,8 +20,8 @@ def test_places_are_conserved_in_buffer():
     sim = Simulator(net, seed=9).run(t_end=3000)
     busy1 = net.transitions[ARRIVAL_1].busy  # batch in production holds its places
     busy2 = net.transitions[ARRIVAL_2].busy
-    assert net.places["Q1"].markers + net.places["Free1"].markers + 5 * busy1 == 30
-    assert net.places["Q2"].markers + net.places["Free2"].markers + 20 * busy2 == 30
+    assert net.places["Q1"].markers + net.places["F1"].markers + 5 * busy1 == 30
+    assert net.places["Q2"].markers + net.places["F2"].markers + 20 * busy2 == 30
     assert sim.fired_out[FILL] > 0
 
 

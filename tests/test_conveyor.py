@@ -71,7 +71,7 @@ def test_every_section_is_filled_or_skipped(k, period, t_end):
     net = build_conveyor_net(k=k, period=period)
     sim = Simulator(net, seed=11).run(t_end=t_end)
     assert sim.fired_out[FILL] + sim.fired_out[SKIP] == math.floor(t_end / period)
-    assert net.places["Section"].markers == 0
+    assert net.places["S"].markers == 0
 
 
 def test_section_skipped_only_when_items_are_missing():

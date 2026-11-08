@@ -23,4 +23,4 @@ def test_cli_buffer_rows(capsys):
     out = capsys.readouterr().out
     assert "буфери L1 = 20, L2 = 60" in out
     assert "Частка часу блокування постачальника типу 1, –" in out
-    assert "Free2" in out
+    assert "F2" in out

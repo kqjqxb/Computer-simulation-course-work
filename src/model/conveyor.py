@@ -3,11 +3,15 @@
 Base scheme: k = 10 items of each type per section, a section every 10 min.
 Variant B:   k = 20 items of each type per section, a section every 20 min.
 
-Buffer (kanban) modification, buffer=L or (L1, L2): place Free_i holds the free
+Places: G1, G2 - suppliers ready to start a batch; Q1, Q2 - items waiting;
+C - conveyor drive; S - an empty section at the station; N_fill, N_skip -
+counters of filled and skipped sections; F1, F2 - free buffer places.
+
+Buffer (kanban) modification, buffer=L or (L1, L2): place F_i holds the free
 places of the type-i buffer. «Надходження i» takes b_i of them when it starts
 (a supplier begins a batch only if there is room for it, otherwise it waits),
 «Комплектація» returns k places of each type. Hence Q_i <= L_i at any time.
-buffer=None gives the base model without the Free places.
+buffer=None gives the base model without the F places.
 """
 from src.petri import PetriNet, const, unif
 
@@ -26,35 +30,35 @@ def build_conveyor_net(k=10, period=10.0,
     net = PetriNet("conveyor")
     net.params = {"k": k, "period": period, "batch1": batch1, "interval1": interval1,
                   "batch2": batch2, "interval2": interval2, "buffer": limits}
-    net.add_place("Gen1", 1)
-    net.add_place("Gen2", 1)
+    net.add_place("G1", 1)
+    net.add_place("G2", 1)
     net.add_place("Q1", q1_0)
     net.add_place("Q2", q2_0)
-    net.add_place("Conv", 1)
-    net.add_place("Section", 0)
-    net.add_place("Filled", 0)
-    net.add_place("Skipped", 0)
+    net.add_place("C", 1)
+    net.add_place("S", 0)
+    net.add_place("N_fill", 0)
+    net.add_place("N_skip", 0)
 
-    arr1_in, arr2_in = {"Gen1": 1}, {"Gen2": 1}
-    fill_out = {"Filled": 1}
+    arr1_in, arr2_in = {"G1": 1}, {"G2": 1}
+    fill_out = {"N_fill": 1}
     if limits is not None:
-        net.add_place("Free1", limits[0] - q1_0)
-        net.add_place("Free2", limits[1] - q2_0)
-        arr1_in["Free1"] = batch1
-        arr2_in["Free2"] = batch2
-        fill_out.update({"Free1": k, "Free2": k})
+        net.add_place("F1", limits[0] - q1_0)
+        net.add_place("F2", limits[1] - q2_0)
+        arr1_in["F1"] = batch1
+        arr2_in["F2"] = batch2
+        fill_out.update({"F1": k, "F2": k})
 
     # generators and the conveyor drive are single-channel: the marker in
-    # Gen1 / Gen2 / Conv returns only when the transition exits
-    net.add_transition(ARRIVAL_1, interval1, arr1_in, {"Gen1": 1, "Q1": batch1})
-    net.add_transition(ARRIVAL_2, interval2, arr2_in, {"Gen2": 1, "Q2": batch2})
-    net.add_transition(CONVEYOR, const(period), {"Conv": 1}, {"Conv": 1, "Section": 1})
+    # G1 / G2 / C returns only when the transition exits
+    net.add_transition(ARRIVAL_1, interval1, arr1_in, {"G1": 1, "Q1": batch1})
+    net.add_transition(ARRIVAL_2, interval2, arr2_in, {"G2": 1, "Q2": batch2})
+    net.add_transition(CONVEYOR, const(period), {"C": 1}, {"C": 1, "S": 1})
 
     # FILL and SKIP compete for the section; FILL has the higher priority,
     # so a section is skipped only when FILL is not enabled
-    net.add_transition(FILL, const(0), {"Section": 1, "Q1": k, "Q2": k},
+    net.add_transition(FILL, const(0), {"S": 1, "Q1": k, "Q2": k},
                        fill_out, priority=1)
-    net.add_transition(SKIP, const(0), {"Section": 1}, {"Skipped": 1}, priority=0)
+    net.add_transition(SKIP, const(0), {"S": 1}, {"N_skip": 1}, priority=0)
     return net
 
 
@@ -82,7 +86,7 @@ def summarize(sim):
     lambda_i         - observed arrival rate of type i, items/min
     w_i              - mean waiting time of a type-i item by Little's law, min
     block_i          - share of time the type-i supplier waits for buffer room
-                       (time-mean of the Gen_i marker; 0 without a buffer)
+                       (time-mean of the G_i marker; 0 without a buffer)
     """
     params = sim.net.params
     n_fill = sim.window_out[FILL]
@@ -110,6 +114,6 @@ def summarize(sim):
         "lambda2": lam2,
         "w1": q1["mean"] / lam1 if lam1 > 0 else nan,
         "w2": q2["mean"] / lam2 if lam2 > 0 else nan,
-        "block1": sim.place_stats("Gen1")["mean"],
-        "block2": sim.place_stats("Gen2")["mean"],
+        "block1": sim.place_stats("G1")["mean"],
+        "block2": sim.place_stats("G2")["mean"],
     }

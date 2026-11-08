@@ -34,7 +34,7 @@ ROWS = [
     ("7", "партія типу 1 у 2 рази більша", dict(batch1=10), "random"),
 ]
 
-PROTOCOL_PLACES = ["Q1", "Q2", "Section", "Filled", "Skipped"]
+PROTOCOL_PLACES = ["Q1", "Q2", "S", "N_fill", "N_skip"]
 METRICS = ["p_skip", "q1_mean", "q2_mean", "q1_max", "q2_max"]
 
 

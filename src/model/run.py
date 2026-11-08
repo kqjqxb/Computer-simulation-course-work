@@ -74,7 +74,7 @@ def main(argv=None):
 
     protocol = None
     if a.trace:
-        places = ["Q1", "Q2", "Section", "Filled", "Skipped"] + (["Free1", "Free2"] if a.buffer else [])
+        places = ["Q1", "Q2", "S", "N_fill", "N_skip"] + (["F1", "F2"] if a.buffer else [])
         protocol = EventProtocol(places=places,
                                  limit=a.trace_limit,
                                  headers=("t, хв", "фаза", "перехід"),
