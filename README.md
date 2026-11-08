@@ -12,6 +12,9 @@ per section at 1 section / 20 min.
 The simulation engine (`src/petri`) is a self-written stochastic Petri net
 simulator with time delays, priorities and multichannel transitions.
 
+Paper (Ukrainian): [report/Курсова_Робота_ІП_33_Ломакін.pdf](report/Курсова_Робота_ІП_33_Ломакін.pdf)
+([.docx](report/Курсова_Робота_ІП_33_Ломакін.docx)).
+
 ## Setup
 
 ```bash
@@ -37,10 +40,11 @@ python -m src.experiments.queue_offset          # Q1 - Q2 vs renewal theory
 # experimental study (results/*.csv, *.png)
 python -m src.experiments.transient             # transient period, criterion (3.1)
 python -m src.experiments.replications          # number of runs, formula (3.5)
-python -m src.experiments.estimates           # base model: mean, std, 95% CI, min/max (T = 480, 2400)
+python -m src.experiments.estimates             # base model: mean, std, 95% CI, min/max (T = 480, 2400)
 python -m src.experiments.anova --T 480 2400    # ANOVA: 10/10 vs 20/20, horizon is a parameter
 python -m src.experiments.buffer_series         # buffer (kanban) grid, regression of P_skip on L2
 python -m src.experiments.compare --T 480 2400  # base, 20/20, buffers (20, 60) and (25, 80); steady state
+python -m src.experiments.compare --plot-only    # redraw the comparison chart from the CSV
 
 # diagrams (docs/diagrams: process, Petri nets, UML; PNG + SVG + source)
 python -m docs.diagrams.render
