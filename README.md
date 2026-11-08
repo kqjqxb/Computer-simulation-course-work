@@ -23,8 +23,17 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-pytest                                   # tests
+pytest                                                # tests
+
+# one or several runs of the model, Ukrainian table with units
+python -m src.model.run --k 10 --period 10 --T 1000 --seed 1 --runs 20
+python -m src.model.run --k 20 --period 20 --T 1000 --runs 20       # 20/20 variant
+python -m src.model.run --int1 5 0 --int2 20 0 --T 60 --trace        # deterministic arrivals, event protocol
 ```
+
+Options of `src.model.run`: `--k`, `--period`, `--T`, `--warmup`, `--seed`, `--runs`,
+`--batch1`, `--int1 D S` (arrival interval unif(D, S), S = 0 for a fixed interval),
+`--batch2`, `--int2 D S`, `--q1-0`, `--q2-0`, `--trace`, `--trace-limit`.
 
 ## Layout
 
