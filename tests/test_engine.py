@@ -119,3 +119,22 @@ def test_protocol_records_in_and_out():
     assert [(t, ph) for t, ph, _, _ in proto.rows] == [
         (0, "IN"), (3, "OUT"), (3, "IN"), (6, "OUT"), (6, "IN")]
     assert proto.rows[-1][3] == {"P": 2}
+
+
+def test_samples_on_a_time_grid_do_not_change_results():
+    def build():
+        net = PetriNet()
+        net.add_place("Src", 1)
+        net.add_place("P", 0)
+        net.add_transition("gen", unif(5, 2), {"Src": 1}, {"Src": 1, "P": 1})
+        return net
+
+    plain = Simulator(build(), seed=3).run(t_end=1000)
+    means = []
+    net = build()
+    sampled = Simulator(net, seed=3).run(
+        t_end=1000, sample_every=100,
+        on_sample=lambda sim: means.append((sim.t, sim.net.places["P"].stat.mean)))
+    assert len(means) == 10 and means[-1][0] == 1000
+    assert means[-1][1] == pytest.approx(plain.net.places["P"].stat.mean)
+    assert sampled.fired_out == plain.fired_out

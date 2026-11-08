@@ -89,8 +89,14 @@ class Simulator:
             place.stat.add(place.markers, dt)
 
     # --- main loop ------------------------------------------------------
-    def run(self, t_end, warmup=0.0):
-        """Simulate on [0, t_end]; statistics are collected on [warmup, t_end]."""
+    def run(self, t_end, warmup=0.0, sample_every=None, on_sample=None):
+        """Simulate on [0, t_end]; statistics are collected on [warmup, t_end].
+
+        If sample_every is given, on_sample(sim) is called at t = sample_every,
+        2 * sample_every, ... <= t_end with the statistics collected up to
+        that moment (before the events of that moment are processed). Used
+        for running means in the transient-period study.
+        """
         if not 0 <= warmup < t_end:
             raise ValueError("need 0 <= warmup < t_end")
         self.warmup = float(warmup)
@@ -99,12 +105,19 @@ class Simulator:
         self.fired_in.clear()
         self.fired_out.clear()
         self.window_out.clear()
+        next_sample = sample_every if sample_every else float("inf")
 
         self._settle()
         if self.observer:
             self.observer(self)
         while True:
             t_next = self.net.next_event_time()
+            bound = min(t_next, t_end)
+            while next_sample <= bound:
+                self._collect(self.t, next_sample)
+                self.t = next_sample
+                on_sample(self)
+                next_sample += sample_every
             if t_next > t_end:
                 self._collect(self.t, t_end)
                 self.t = float(t_end)
