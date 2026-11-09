@@ -2,7 +2,7 @@ from .stats import TimeWeightedStat
 
 
 class Place:
-    """Petri net place: a marker count plus time-weighted statistics."""
+    """Petri net place: markers + time-weighted statistics."""
 
     def __init__(self, name, markers=0):
         if markers < 0:

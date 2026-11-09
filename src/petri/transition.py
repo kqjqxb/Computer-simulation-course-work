@@ -4,13 +4,15 @@ from .rng import as_delay
 
 
 class Transition:
-    """Timed transition with a list of exit moments (multichannel).
+    """Timed transition with a list of exit moments, multichannel.
 
     priority: larger value fires first when transitions conflict.
-    probability: relative weight among enabled transitions of equal priority.
+    probability: relative weight among enabled transitions of
+    equal priority.
     """
 
-    def __init__(self, name, delay=0.0, priority=0, probability=1.0):
+    def __init__(self, name, delay=0.0, priority=0,
+                 probability=1.0):
         if probability <= 0:
             raise ValueError("probability must be positive")
         self.name = name
@@ -22,8 +24,9 @@ class Transition:
         self.exits = []  # sorted exit moments of busy channels
 
     def is_enabled(self):
-        """X(M, T): every input place holds at least the arc weight."""
-        return all(arc.place.markers >= arc.weight for arc in self.inputs)
+        """X(M, T): each input place holds at least the weight."""
+        return all(arc.place.markers >= arc.weight
+                   for arc in self.inputs)
 
     def fire_in(self, t, rng):
         """Take markers from input places and schedule an exit."""
@@ -34,7 +37,7 @@ class Transition:
         return exit_time
 
     def fire_out(self, t):
-        """Release every channel whose exit moment is t. Returns how many."""
+        """Release channels with exit moment t; their number."""
         n = 0
         while self.exits and self.exits[0] <= t:
             self.exits.pop(0)
@@ -55,4 +58,6 @@ class Transition:
         self.exits = []
 
     def __repr__(self):
-        return f"Transition({self.name!r}, delay={self.delay!r}, r={self.priority}, b={self.probability:g})"
+        return (f"Transition({self.name!r}, "
+                f"delay={self.delay!r}, r={self.priority}, "
+                f"b={self.probability:g})")

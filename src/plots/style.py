@@ -15,7 +15,8 @@ plt.rcParams.update({
     "axes.formatter.use_locale": False,
 })
 
-RUN_COLORS = ["#1f77b4", "#d62728", "#2ca02c", "#9467bd", "#ff7f0e", "#8c564b"]
+RUN_COLORS = ["#1f77b4", "#d62728", "#2ca02c", "#9467bd",
+              "#ff7f0e", "#8c564b"]
 
 
 def decimal_comma(ax, axes="xy"):

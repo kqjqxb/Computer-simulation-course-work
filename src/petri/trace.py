@@ -1,8 +1,9 @@
 class EventProtocol:
-    """Event log: time, phase (IN / OUT), transition, marking after the event."""
+    """Event log: time, phase (IN / OUT), transition, marking."""
 
     def __init__(self, places=None, limit=None,
-                 headers=("t", "phase", "transition"), phase_names=None):
+                 headers=("t", "phase", "transition"),
+                 phase_names=None):
         self.places = places  # place names to show; None = all
         self.limit = limit
         self.headers = headers
@@ -11,7 +12,8 @@ class EventProtocol:
 
     @property
     def full(self):
-        return self.limit is not None and len(self.rows) >= self.limit
+        return (self.limit is not None
+                and len(self.rows) >= self.limit)
 
     def record(self, t, phase, transition, net):
         if self.full:
@@ -26,12 +28,15 @@ class EventProtocol:
             return ""
         names = list(self.rows[0][3])
         h_t, h_phase, h_tr = self.headers
-        phase = {ph: self.phase_names.get(ph, ph) for ph in ("IN", "OUT")}
+        phase = {ph: self.phase_names.get(ph, ph)
+                 for ph in ("IN", "OUT")}
         pw = max(len(h_phase), *(len(v) for v in phase.values()))
         width = max(len(h_tr), *(len(r[2]) for r in self.rows))
-        head = f"{h_t:>8}  {h_phase:<{pw}}  {h_tr:<{width}}  " + "  ".join(f"{n:>7}" for n in names)
+        head = (f"{h_t:>8}  {h_phase:<{pw}}  {h_tr:<{width}}  "
+                + "  ".join(f"{n:>7}" for n in names))
         lines = [head]
         for t, ph, tr, marking in self.rows:
-            lines.append(f"{t:8.3f}  {phase[ph]:<{pw}}  {tr:<{width}}  "
-                         + "  ".join(f"{marking[n]:>7}" for n in names))
+            cells = "  ".join(f"{marking[n]:>7}" for n in names)
+            lines.append(f"{t:8.3f}  {phase[ph]:<{pw}}  "
+                         f"{tr:<{width}}  " + cells)
         return "\n".join(lines)

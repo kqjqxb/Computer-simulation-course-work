@@ -3,7 +3,7 @@
 const(d)    - deterministic value d
 unif(d, s)  - uniform on (d - s, d + s)
 exp(d)      - exponential with mean d
-norm(d, s)  - normal with mean d and standard deviation s, cut at 0
+norm(d, s)  - normal with mean d and std s, cut at 0
 """
 import numpy as np
 

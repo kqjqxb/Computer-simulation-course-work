@@ -5,7 +5,7 @@ from .place import Place
 
 @dataclass(frozen=True)
 class Arc:
-    """Arc between a place and a transition; weight = arc multiplicity k."""
+    """Arc between a place and a transition; weight k."""
 
     place: Place
     weight: int = 1

@@ -1,17 +1,21 @@
 """Completing conveyor (variant D2) as a stochastic Petri net.
 
-Base scheme: k = 10 items of each type per section, a section every 10 min.
-Variant B:   k = 20 items of each type per section, a section every 20 min.
+Base scheme: k = 10 items of each type per section, a section
+every 10 min.
+Variant B:   k = 20 items of each type per section, a section
+             every 20 min.
 
-Places: G1, G2 - suppliers ready to start a batch; Q1, Q2 - items waiting;
-C - conveyor drive; S - an empty section at the station; N_fill, N_skip -
-counters of filled and skipped sections; F1, F2 - free buffer places.
+Places: G1, G2 - suppliers ready to start a batch; Q1, Q2 - items
+waiting; C - conveyor drive; S - an empty section at the station;
+N_fill, N_skip - counters of filled and skipped sections; F1, F2 -
+free buffer places.
 
-Buffer (kanban) modification, buffer=L or (L1, L2): place F_i holds the free
-places of the type-i buffer. «Надходження i» takes b_i of them when it starts
-(a supplier begins a batch only if there is room for it, otherwise it waits),
-«Комплектація» returns k places of each type. Hence Q_i <= L_i at any time.
-buffer=None gives the base model without the F places.
+Buffer (kanban) modification, buffer=L or (L1, L2): place F_i
+holds the free places of the type-i buffer. «Надходження i» takes
+b_i of them when it starts (a supplier begins a batch only if
+there is room for it, otherwise it waits), «Комплектація» returns
+k places of each type. Hence Q_i <= L_i at any time. buffer=None
+gives the base model without the F places.
 """
 from src.petri import PetriNet, const, unif
 
@@ -28,8 +32,10 @@ def build_conveyor_net(k=10, period=10.0,
                        q1_0=0, q2_0=0, buffer=None):
     limits = _buffer_limits(buffer, k, batch1, batch2, q1_0, q2_0)
     net = PetriNet("conveyor")
-    net.params = {"k": k, "period": period, "batch1": batch1, "interval1": interval1,
-                  "batch2": batch2, "interval2": interval2, "buffer": limits}
+    net.params = {"k": k, "period": period, "batch1": batch1,
+                  "interval1": interval1,
+                  "batch2": batch2, "interval2": interval2,
+                  "buffer": limits}
     net.add_place("G1", 1)
     net.add_place("G2", 1)
     net.add_place("Q1", q1_0)
@@ -48,45 +54,57 @@ def build_conveyor_net(k=10, period=10.0,
         arr2_in["F2"] = batch2
         fill_out.update({"F1": k, "F2": k})
 
-    # generators and the conveyor drive are single-channel: the marker in
-    # G1 / G2 / C returns only when the transition exits
-    net.add_transition(ARRIVAL_1, interval1, arr1_in, {"G1": 1, "Q1": batch1})
-    net.add_transition(ARRIVAL_2, interval2, arr2_in, {"G2": 1, "Q2": batch2})
-    net.add_transition(CONVEYOR, const(period), {"C": 1}, {"C": 1, "S": 1})
+    # generators and the conveyor drive are single-channel: the
+    # marker in G1 / G2 / C returns only when the transition exits
+    net.add_transition(ARRIVAL_1, interval1, arr1_in,
+                       {"G1": 1, "Q1": batch1})
+    net.add_transition(ARRIVAL_2, interval2, arr2_in,
+                       {"G2": 1, "Q2": batch2})
+    net.add_transition(CONVEYOR, const(period), {"C": 1},
+                       {"C": 1, "S": 1})
 
-    # FILL and SKIP compete for the section; FILL has the higher priority,
-    # so a section is skipped only when FILL is not enabled
+    # FILL and SKIP compete for the section; FILL has the higher
+    # priority, so a section is skipped only when FILL is not
+    # enabled
     net.add_transition(FILL, const(0), {"S": 1, "Q1": k, "Q2": k},
                        fill_out, priority=1)
-    net.add_transition(SKIP, const(0), {"S": 1}, {"N_skip": 1}, priority=0)
+    net.add_transition(SKIP, const(0), {"S": 1}, {"N_skip": 1},
+                       priority=0)
     return net
 
 
 def _buffer_limits(buffer, k, batch1, batch2, q1_0, q2_0):
     if buffer is None:
         return None
-    l1, l2 = (buffer, buffer) if isinstance(buffer, int) else buffer
-    for name, lim, b, q0 in (("L1", l1, batch1, q1_0), ("L2", l2, batch2, q2_0)):
-        # a smaller buffer can never hold a batch or a full section -> deadlock
+    if isinstance(buffer, int):
+        buffer = (buffer, buffer)
+    l1, l2 = buffer
+    for name, lim, b, q0 in (("L1", l1, batch1, q1_0),
+                             ("L2", l2, batch2, q2_0)):
+        # a smaller buffer can never hold a batch or a full
+        # section -> deadlock
         if lim < max(b, k):
-            raise ValueError(f"{name} = {lim} must be >= max(batch, k) = {max(b, k)}")
+            raise ValueError(f"{name} = {lim} must be >= "
+                             f"max(batch, k) = {max(b, k)}")
         if q0 > lim:
-            raise ValueError(f"initial queue {q0} exceeds {name} = {lim}")
+            raise ValueError(f"initial queue {q0} exceeds {name} "
+                             f"= {lim}")
     return (l1, l2)
 
 
 def summarize(sim):
     """Model outputs on the statistics window (warmup, T].
 
-    p_skip           = N_skip / (N_fill + N_skip)
-    qi_mean, qi_std  - time-weighted mean and std of the queue, items
-    qi_max           - maximum queue held for a positive time, items
-    qi_end           - queue at the end of the run, items
-    sections_per_hour, items_per_hour - throughput (items of each type)
-    lambda_i         - observed arrival rate of type i, items/min
-    w_i              - mean waiting time of a type-i item by Little's law, min
-    block_i          - share of time the type-i supplier waits for buffer room
-                       (time-mean of the G_i marker; 0 without a buffer)
+    p_skip          = N_skip / (N_fill + N_skip)
+    qi_mean, qi_std - time-weighted mean and std of the queue
+    qi_max          - largest queue held for a positive time
+    qi_end          - queue at the end of the run
+    sections_per_hour, items_per_hour - throughput
+    lambda_i        - observed arrival rate of type i, items/min
+    w_i             - mean waiting time (Little's law), min
+    block_i         - share of time the type-i supplier waits for
+                      buffer room (mean of G_i, 0 if no buffer)
+    Queues are in items, throughput in items of each type/hour.
     """
     params = sim.net.params
     n_fill = sim.window_out[FILL]
@@ -104,8 +122,10 @@ def summarize(sim):
         "n_fill": n_fill,
         "n_skip": n_skip,
         "p_skip": n_skip / total if total else nan,
-        "q1_mean": q1["mean"], "q1_std": q1["std"], "q1_max": q1["max"],
-        "q2_mean": q2["mean"], "q2_std": q2["std"], "q2_max": q2["max"],
+        "q1_mean": q1["mean"], "q1_std": q1["std"],
+        "q1_max": q1["max"],
+        "q2_mean": q2["mean"], "q2_std": q2["std"],
+        "q2_max": q2["max"],
         "q1_end": sim.net.places["Q1"].markers,
         "q2_end": sim.net.places["Q2"].markers,
         "sections_per_hour": 60.0 * n_fill / span,

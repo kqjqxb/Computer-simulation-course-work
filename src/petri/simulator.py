@@ -20,20 +20,24 @@ MAX_FIRINGS_PER_INSTANT = 10_000
 
 
 class Simulator:
-    def __init__(self, net, seed=None, protocol=None, observer=None):
+    def __init__(self, net, seed=None, protocol=None,
+                 observer=None):
         self.net = net
         self.rng = make_rng(seed)
         self.protocol = protocol
-        self.observer = observer  # called as observer(sim) after each instant
+        # called as observer(sim) after each instant
+        self.observer = observer
         self.t = 0.0
         self.warmup = 0.0
         self.fired_in = Counter()   # all firings
         self.fired_out = Counter()  # all exits
         self.window_out = Counter()  # exits in (warmup, t_end]
 
-    # --- state change ---------------------------------------------------
+    # --- state change
+    # ---------------------------------------------------
     def _out_phase(self):
-        ready = [tr for tr in self.net.transitions.values() if tr.next_exit <= self.t]
+        ready = [tr for tr in self.net.transitions.values()
+                 if tr.next_exit <= self.t]
         self.rng.shuffle(ready)
         for tr in ready:
             n = tr.fire_out(self.t)
@@ -42,7 +46,8 @@ class Simulator:
                 self.window_out[tr.name] += n
             if self.protocol is not None:
                 for _ in range(n):
-                    self.protocol.record(self.t, "OUT", tr, self.net)
+                    self.protocol.record(self.t, "OUT", tr,
+                                         self.net)
         return bool(ready)
 
     def _choose(self, enabled):
@@ -52,11 +57,12 @@ class Simulator:
             return group[0]
         weights = [tr.probability for tr in group]
         total = sum(weights)
-        idx = self.rng.choice(len(group), p=[w / total for w in weights])
+        idx = self.rng.choice(len(group),
+                              p=[w / total for w in weights])
         return group[idx]
 
     def _in_phase(self):
-        """Fire enabled transitions one by one; returns how many fired."""
+        """Fire enabled transitions one by one; their number."""
         fired = 0
         while fired <= MAX_FIRINGS_PER_INSTANT:
             enabled = self.net.enabled()
@@ -71,15 +77,17 @@ class Simulator:
         return fired
 
     def _settle(self):
-        """Process the current instant until nothing more happens at t."""
+        """Process the current instant until nothing happens."""
         fired = self._in_phase()
         while self.net.next_event_time() <= self.t:
             if fired > MAX_FIRINGS_PER_INSTANT:
-                raise RuntimeError(f"net does not settle at t={self.t}")
+                raise RuntimeError(
+                    f"net does not settle at t={self.t}")
             self._out_phase()
             fired += self._in_phase()
 
-    # --- statistics -----------------------------------------------------
+    # --- statistics
+    # -----------------------------------------------------
     def _collect(self, t_from, t_to):
         lo = max(t_from, self.warmup)
         dt = t_to - lo
@@ -88,14 +96,17 @@ class Simulator:
         for place in self.net.places.values():
             place.stat.add(place.markers, dt)
 
-    # --- main loop ------------------------------------------------------
-    def run(self, t_end, warmup=0.0, sample_every=None, on_sample=None):
-        """Simulate on [0, t_end]; statistics are collected on [warmup, t_end].
+    # --- main loop
+    # ------------------------------------------------------
+    def run(self, t_end, warmup=0.0, sample_every=None,
+            on_sample=None):
+        """Simulate on [0, t_end]; statistics on [warmup, t_end].
 
-        If sample_every is given, on_sample(sim) is called at t = sample_every,
-        2 * sample_every, ... <= t_end with the statistics collected up to
-        that moment (before the events of that moment are processed). Used
-        for running means in the transient-period study.
+        If sample_every is given, on_sample(sim) is called at t =
+        sample_every, 2 * sample_every, ... <= t_end with the
+        statistics collected up to that moment (before the events
+        of that moment are processed). Used for running means in
+        the transient-period study.
         """
         if not 0 <= warmup < t_end:
             raise ValueError("need 0 <= warmup < t_end")
@@ -105,7 +116,7 @@ class Simulator:
         self.fired_in.clear()
         self.fired_out.clear()
         self.window_out.clear()
-        next_sample = sample_every if sample_every else float("inf")
+        next_sample = sample_every or float("inf")
 
         self._settle()
         if self.observer:
@@ -130,7 +141,9 @@ class Simulator:
                 self.observer(self)
         return self
 
-    # --- results --------------------------------------------------------
+    # --- results
+    # --------------------------------------------------------
     def place_stats(self, name):
         st = self.net.places[name].stat
-        return {"mean": st.mean, "std": st.std, "min": st.min, "max": st.max}
+        return {"mean": st.mean, "std": st.std, "min": st.min,
+                "max": st.max}

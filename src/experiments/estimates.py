@@ -2,11 +2,12 @@
 
 python -m src.experiments.estimates [--T 480 2400] [--runs 1600]
 
-Terminating simulation from empty queues, horizon T. For every output the
-sample over p independent runs gives the mean, the standard deviation, the
-95 % Student confidence interval of the mean and the smallest and largest
-value over the runs. Seeds 1..p are the ones of the 10/10 level in anova.py,
-so the means coincide with results/anova_T*.csv.
+Terminating simulation from empty queues, horizon T. For every
+output the sample over p independent runs gives the mean, the
+standard deviation, the 95 % Student confidence interval of the
+mean and the smallest and largest value over the runs. Seeds 1..p
+are the ones of the 10/10 level in anova.py, so the means coincide
+with results/anova_T*.csv.
 """
 import argparse
 import csv
@@ -28,24 +29,31 @@ def estimate(values, beta=BETA):
     n = len(x)
     mean = float(x.mean())
     std = float(x.std(ddof=1))
-    half = float(stats.t.ppf((1 + beta) / 2, n - 1) * std / math.sqrt(n))
-    return {"mean": mean, "std": std, "ci": half, "ci_low": mean - half,
-            "ci_high": mean + half, "min": float(x.min()), "max": float(x.max())}
+    t_crit = stats.t.ppf((1 + beta) / 2, n - 1)
+    half = float(t_crit * std / math.sqrt(n))
+    return {"mean": mean, "std": std, "ci": half,
+            "ci_low": mean - half,
+            "ci_high": mean + half, "min": float(x.min()),
+            "max": float(x.max())}
 
 
 def run(T, runs, seed=1):
-    data = replicate_parallel(runs, T, seed=seed, k=10, period=10.0)
+    data = replicate_parallel(runs, T, seed=seed, k=10,
+                              period=10.0)
     rows = []
     for key, label in RESPONSES:
-        row = {"T": T, "runs": runs, "response": key, "label": label}
+        row = {"T": T, "runs": runs, "response": key,
+               "label": label}
         row.update(estimate([d[key] for d in data]))
         rows.append(row)
     return rows
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--T", type=float, nargs="+", default=[480.0, 2400.0])
+    ap = argparse.ArgumentParser(
+        description=__doc__.splitlines()[0])
+    ap.add_argument("--T", type=float, nargs="+",
+                    default=[480.0, 2400.0])
     ap.add_argument("--runs", type=int, default=1600)
     args = ap.parse_args()
     rows = []
@@ -58,7 +66,8 @@ def main():
         w.writeheader()
         w.writerows(rows)
     for r in rows:
-        print(f"T = {r['T']:g}  {r['label']:<48} {r['mean']:9.4f} ± {r['ci']:.4f}  "
+        print(f"T = {r['T']:g}  {r['label']:<48} "
+              f"{r['mean']:9.4f} ± {r['ci']:.4f}  "
               f"σ = {r['std']:.4f}  [{r['min']:g}; {r['max']:g}]")
     print(f"-> {out}")
 
